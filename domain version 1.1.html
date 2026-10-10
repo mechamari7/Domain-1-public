@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 70%);
+            color: #f8fafc; 
+            margin: 0; 
+            padding: 40px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        /* Top Header & Custom Clock Setup */
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        h1 { 
+            font-size: 28px; 
+            margin: 0; 
+            color: #f59e0b; /* Half-Life Lambda Orange Accent */
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            font-weight: 700;
+        }
+        #clock {
+            font-size: 20px;
+            font-weight: 600;
+            color: #a78bfa;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+            background: #1e293b;
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #475569;
+        }
+
+        /* Interactive Search Engine Box */
+        .search-bar { 
+            width: 100%; 
+            padding: 14px 20px; 
+            background: rgba(30, 41, 59, 0.7); 
+            border: 1px solid #475569; 
+            border-radius: 12px; 
+            color: white; 
+            box-sizing: border-box; 
+            margin-bottom: 35px; 
+            font-size: 16px; 
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .search-bar:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        /* Dashboard Grid & Card Stylings */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; }
+        .card { 
+            background: rgba(30, 41, 59, 0.5); 
+            border: 1px solid rgba(51, 65, 85, 0.7); 
+            padding: 22px; 
+            border-radius: 14px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(4px);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            background: rgba(30, 41, 59, 0.8);
+            border-color: #f59e0b; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(245, 158, 11, 0.15);
+        }
+        
+        /* Special Grid Sizing for the Status Panel */
+        .status-card {
+            grid-column: span 2;
+            border-color: #a78bfa;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+        }
+        .status-card:hover {
+            border-color: #c084fc;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(192, 132, 252, 0.2);
+        }
+        .greeting-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+        }
+        .sub-status {
+            font-size: 14px;
+            color: #38bdf8;
+            margin-bottom: 18px;
+            font-family: monospace;
+        }
+
+        /* Terminal Launcher Input Styles */
+        .launcher-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .launcher-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .launcher-input:focus {
+            outline: none;
+            border-color: #a78bfa;
+        }
+        .launcher-btn {
+            padding: 10px 16px;
+            background: #a78bfa;
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .launcher-btn:hover {
+            background: #c084fc;
+        }
+
+        /* Utility Quick Actions Toggle Grid */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .action-chip {
+            padding: 6px 12px;
+            background: rgba(71, 85, 105, 0.4);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #94a3b8;
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .action-chip:hover {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+        
+        /* Portal Theme Specific Hover Accent */
+        .portal-card:hover {
+            border-color: #00a2e8; /* Portal Blue Accent */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 162, 232, 0.2);
+        }
+
+        /* Subnautica Theme Specific Hover Accent */
+        .subnautica-card:hover {
+            border-color: #0ea5e9; /* Deep Ocean Cyan Accent */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(14, 165, 233, 0.2);
+        }
+
+        .card h2 { 
+            font-size: 13px; 
+            margin-top: 0; 
+            color: #94a3b8; 
+            text-transform: uppercase; 
+            letter-spacing: 0.08em; 
+            margin-bottom: 14px; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 8px; 
+        }
+        .card ul { list-style: none; padding: 0; margin: 0; }
+        .card li { margin: 12px 0; }
+        .card a { 
+            color: #e2e8f0; 
+            text-decoration: none; 
+            font-weight: 500; 
+            font-size: 15px; 
+            transition: color 0.2s ease;
+        }
+        .card a:hover { 
+            color: #38bdf8; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-area">
+        <h1>Welcome Home</h1>
+        <div id="clock">00:00:00 AM</div>
+    </div>
+    
+    <form action="https://google.com" method="get" target="_blank">
+        <input type="text" name="q" class="search-bar" placeholder="Search Google or type a command..." autofocus>
+    </form>
+
+    <div class="grid">
+        <!-- System Command & Status Widget -->
+        <div class="card status-card">
+            <div class="greeting-text" id="dynamicGreeting">System Initializing...</div>
+            <div class="sub-status">> APERTURE CORE: ONLINE // BATTLESTATION SECURE</div>
+            
+            <div class="launcher-box">
+                <input type="text" id="terminalInput" class="launcher-input" placeholder="Type quick command (e.g. 'steam', 'map', 'yt')...">
+                <button class="launcher-btn" onclick="runCommand()">Execute</button>
+            </div>
+
+            <div class="action-row">
+                <a href="file:///home/chronos/u-e6cc3ed199c5d2262050accc8610c8ccd6a39e0b/MyFiles/Downloads/the%20mechamari%20map.html" target="_blank" class="action-chip">🧑‍💻 mechamari data</a>
+                <a href="https://weather.com" target="_blank" class="action-chip">☁️ Weather</a>
+                <a href="https://www.calculator.net/" target="_blank" class="action-chip">🧮 Calculator</a>
+            </div>
+        </div>
+
+        <!-- Planet 4546B Subnautica Category -->
+        <div class="card subnautica-card">
+            <h2 style="color: #0ea5e9;">Planet 4546B</h2>
+            <ul>
+                <li><a href="https://fandom.com" target="_blank">Subnautica Wiki</a></li>
+                <li><a href="https://subnauticamap.io" target="_blank">Interactive Map</a></li>
+                <li><a href="https://reddit.com" target="_blank">r/Subnautica Community</a></li>
+                <li><a href="https://nexusmods.com" target="_blank">Subnautica Nexus Mods</a></li>
+            </ul>
+        </div>
+
+        <!-- Cloud Gaming Section -->
+        <div class="card">
+            <h2>Cloud Gaming Hub</h2>
+            <ul>
+                <li><a href="https://geforcenow.com" target="_blank">GeForce NOW</a></li>
+                <li><a href="https://xbox.com" target="_blank">Xbox Cloud Gaming</a></li>
+                <li><a href="https://playstation.com" target="_blank">PlayStation Plus Cloud</a></li>
+            </ul>
+        </div>
+        <!-- Portal Tab Section -->
+        <div class="card portal-card">
+            <h2 style="color: #00a2e8;">Aperture Science</h2>
+            <ul>
+                <li><a href="https://steamcommunity.com" target="_blank">Portal Community</a></li>
+                <li><a href="https://steamcommunity.com" target="_blank">Portal 2 Community</a></li>
+                <li><a href="https://steamcommunity.com" target="_blank">Custom Test Chambers</a></li>
+            </ul>
+        </div>
+
+        <!-- Dedicated Half-Life Category -->
+        <div class="card">
+            <h2>Half-Life Universe</h2>
+            <ul>
+                <li><a href="https://steampowered.com" target="_blank">Half-Life: Alyx (VR)</a></li>
+                <li><a href="https://steampowered.com" target="_blank">Black Mesa</a></li>
+                <li><a href="https://combineoverwiki.net" target="_blank">Combine Overwiki</a></li>
+                <li><a href="https://moddb.com" target="_blank">HL2 Mods (ModDB)</a></li>
+            </ul>
+        </div>
+
+        <!-- Valve / PC Gaming Hub -->
+        <div class="card">
+            <h2>Valve & Steam</h2>
+            <ul>
+                <li><a href="https://steampowered.com" target="_blank">Steam Store</a></li>
+                <li><a href="https://steamcommunity.com" target="_blank">Steam Community</a></li>
+                <li><a href="https://valvesoftware.com" target="_blank">Valve Software</a></li>
+                <li><a href="https://counter-strike.net" target="_blank">Counter-Strike</a></li>
+            </ul>
+        </div>
+
+        <!-- Virtual Reality Hub -->
+        <div class="card">
+            <h2>VR Stuff</h2>
+            <ul>
+                <li><a href="https://reddit.com" target="_blank">r/VirtualReality</a></li>
+                <li><a href="https://meta.com" target="_blank">Meta Quest Hub</a></li>
+                <li><a href="https://sidequestvr.com" target="_blank">SideQuest VR</a></li>
+            </ul>
+        </div>
+
+        <!-- Entertainment & Streaming -->
+        <div class="card">
+            <h2>Streaming</h2>
+            <ul>
+                <li><a href="https://netflix.com" target="_blank">Netflix</a></li>
+                <li><a href="https://youtube.com" target="_blank">YouTube</a></li>
+                <li><a href="https://twitch.tv" target="_blank">Twitch</a></li>
+            </ul>
+        </div>
+
+       <!-- social gaming -->
+        <div class="card social gaming">
+            <h2 style="color: 00a2e8;">social gaming</h2>
+            <ul>
+                <li><a href="https://direct.playstation.com/en-us" target="_blank">playstation</a></li>
+                <li><a href="https://www.xbox.com/en-US/" target="_blank">xbox</a></li>
+                <li><a href="https://www.nintendo.com/us/" target="_blank">nintendo</a></li>
+                <li><a href="https://www.reddit.com/r/gaming/" target="_blank">r/gaming</a></li>
+             </ul>
+        </div>
+
+        <!-- Shopping Hub -->
+        <div class="card">
+            <h2>Shopping</h2>
+            <ul>
+                <li><a href="https://walmart.com" target="_blank">Walmart</a></li>
+                <li><a href="https://amazon.com" target="_blank">Amazon</a></li>
+                <li><a href="https://ebay.com" target="_blank">eBay</a></li>
+            </ul>
+        </div>
+
+        <!-- Communication / Socials -->
+        <div class="card">
+            <h2>Social Hub</h2>
+            <ul>
+                <li><a href="https://discord.com" target="_blank">Discord</a></li>
+                <li><a href="https://gmail.com" target="_blank">Gmail</a></li>
+                <li><a href="https://github.com" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Clock & Dynamic Username Greeting System
+    function updateClockAndGreeting() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        // Custom Username Welcome System
+        const greetingElement = document.getElementById('dynamicGreeting');
+        if (hours >= 5 && hours < 12) {
+            greetingElement.textContent = "Good Morning, mechamari7";
+        } else if (hours >= 12 && hours < 18) {
+            greetingElement.textContent = "Welcome Back, mechamari7";
+        } else {
+            greetingElement.textContent = "Good Evening, mechamari7";
+        }
+
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+    setInterval(updateClockAndGreeting, 1000);
+    updateClockAndGreeting();
+
+    // Quick Command Launcher Core Engine
+    function runCommand() {
+        const cmd = document.getElementById('terminalInput').value.trim().toLowerCase();
+        if (!cmd) return;
+
+        const shortcuts = {
+            'steam': 'https://steampowered.com',
+            'yt': 'https://youtube.com',
+            'discord': 'https://discord.com',
+            'map': 'https://subnauticamap.io',
+            'xbox': 'https://xbox.com',
+            'gfn': 'https://geforcenow.com',
+            'quest': 'https://sidequestvr.com'
+        };
+
+        if (shortcuts[cmd]) {
+            window.open(shortcuts[cmd], '_blank');
+            document.getElementById('terminalInput').value = '';
+        } else {
+            window.open('https://google.com' + encodeURIComponent(cmd), '_blank');
+            document.getElementById('terminalInput').value = '';
+        }
+    }
+
+    document.getElementById('terminalInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            runCommand();
+        }
+    });
+</script>
+    <!-- Fixed Hidden Audio Stream Matrix with a direct playable music link -->
+<audio id="dashboardMusic" loop>
+    <source src="https://soundhelix.com" type="audio/mpeg">
+</audio>
+
+</body>
+</html>
