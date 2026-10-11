@@ -238,6 +238,50 @@
             font-size: 13px;
         }
         .unlock-box button:hover { background: #c084fc; }
+        /* Custom Groups */
+        .add-group-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #475569;
+            cursor: pointer;
+            min-height: 100px;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        .add-group-card:hover {
+            border-color: #a78bfa;
+            color: #a78bfa;
+            background: rgba(167, 139, 250, 0.05);
+            transform: translateY(-4px);
+        }
+        .add-link-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 6px;
+            background: none;
+            border: 1px dashed #475569;
+            border-radius: 6px;
+            color: #64748b;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-family: inherit;
+        }
+        .add-link-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+        .delete-group-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.5;
+            background: none;
+            border: none;
+            padding: 0;
+            margin-left: 8px;
+        }
+        .delete-group-btn:hover { opacity: 1; color: #ef4444; }
     </style>
 </head>
 <body>
@@ -429,6 +473,115 @@
             runCommand();
         }
     });
+    // Custom Link Groups System
+    (function() {
+        const STORAGE_KEY = 'dashboard_custom_groups';
+
+        function getCustomGroups() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+            catch (e) { return {}; }
+        }
+        function saveCustomGroups(groups) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+        }
+
+        function createCardElement(name, links) {
+            const card = document.createElement('div');
+            card.className = 'card custom-group';
+            card.setAttribute('data-group-name', name);
+
+            const h2 = document.createElement('h2');
+            h2.textContent = name;
+            card.appendChild(h2);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-group-btn';
+            delBtn.textContent = '✕';
+            delBtn.title = 'Delete group';
+            delBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (confirm('Delete "' + name + '" and all its links?')) {
+                    deleteGroup(name);
+                    card.remove();
+                }
+            };
+            h2.appendChild(delBtn);
+
+            const ul = document.createElement('ul');
+            (links || []).forEach(function(link) {
+                ul.appendChild(createLinkElement(link.label, link.url));
+            });
+            card.appendChild(ul);
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'add-link-btn';
+            addBtn.textContent = '+ Add Link';
+            addBtn.onclick = function(e) {
+                e.stopPropagation();
+                addLink(name, ul);
+            };
+            card.appendChild(addBtn);
+
+            return card;
+        }
+
+        function createLinkElement(label, url) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.textContent = label;
+            li.appendChild(a);
+            return li;
+        }
+
+        function addLink(groupName, ul) {
+            const label = prompt('Link name:');
+            if (!label) return;
+            const url = prompt('Link URL (include https://):');
+            if (!url) return;
+            const groups = getCustomGroups();
+            if (!groups[groupName]) groups[groupName] = [];
+            groups[groupName].push({ label: label, url: url });
+            saveCustomGroups(groups);
+            ul.appendChild(createLinkElement(label, url));
+        }
+
+        function deleteGroup(groupName) {
+            const groups = getCustomGroups();
+            delete groups[groupName];
+            saveCustomGroups(groups);
+            var pws = JSON.parse(localStorage.getItem('dashboard_group_passwords') || '{}');
+            delete pws[groupName];
+            localStorage.setItem('dashboard_group_passwords', JSON.stringify(pws));
+        }
+
+        function createGroup() {
+            const name = prompt('Group name:');
+            if (!name) return;
+            const groups = getCustomGroups();
+            if (groups[name]) { alert('A group named "' + name + '" already exists.'); return; }
+            groups[name] = [];
+            saveCustomGroups(groups);
+            const card = createCardElement(name, []);
+            const grid = document.querySelector('.grid');
+            const addCard = grid.querySelector('.add-group-card');
+            grid.insertBefore(card, addCard);
+            if (window.dashboardLock) window.dashboardLock.addLockButton(card);
+        }
+
+        // Render existing custom groups and add the "+" button
+        const grid = document.querySelector('.grid');
+        Object.keys(getCustomGroups()).forEach(function(name) {
+            grid.appendChild(createCardElement(name, getCustomGroups()[name]));
+        });
+        const addCard = document.createElement('div');
+        addCard.className = 'card add-group-card';
+        addCard.textContent = '+ Add Group';
+        addCard.onclick = createGroup;
+        grid.appendChild(addCard);
+    })();
+
     // Password Lock System for Link Groups
     (function() {
         const STORAGE_KEY = 'dashboard_group_passwords';
@@ -447,7 +600,9 @@
         function addLockButton(card) {
             const h2 = card.querySelector('h2');
             if (!h2) return;
-            card.setAttribute('data-group-name', h2.textContent.trim());
+            if (!card.getAttribute('data-group-name')) {
+                card.setAttribute('data-group-name', h2.textContent.trim());
+            }
             const btn = document.createElement('button');
             btn.className = 'lock-btn';
             const name = getGroupName(card);
@@ -522,6 +677,9 @@
             addLockButton(card);
             if (getPasswords()[getGroupName(card)]) lockCard(card);
         });
+
+        // Expose for dynamically created custom groups
+        window.dashboardLock = { addLockButton: addLockButton, lockCard: lockCard, getGroupName: getGroupName };
     })();
 </script>
     <!-- Fixed Hidden Audio Stream Matrix with a direct playable music link -->
