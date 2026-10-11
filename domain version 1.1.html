@@ -678,15 +678,20 @@
                 if (e.key === 'Enter') tryUnlock();
             });
             forgot.onclick = function() {
-                const name = getGroupName(card);
-                if (confirm('Remove the password from "' + name + '"? This will unlock the group.')) {
-                    const pws = getPasswords();
-                    delete pws[name];
-                    savePasswords(pws);
-                    unlockCard(card);
-                    const lockBtn = card.querySelector('.lock-btn');
-                    if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Set password'; }
+                // Two-click confirm (no browser pop-ups, which can be blocked)
+                if (!forgot.dataset.confirm) {
+                    forgot.dataset.confirm = '1';
+                    forgot.textContent = 'Click again to reset password';
+                    forgot.style.color = '#ef4444';
+                    return;
                 }
+                const name = getGroupName(card);
+                const pws = getPasswords();
+                delete pws[name];
+                savePasswords(pws);
+                unlockCard(card);
+                const lockBtn = card.querySelector('.lock-btn');
+                if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Set password'; }
             };
         }
 
