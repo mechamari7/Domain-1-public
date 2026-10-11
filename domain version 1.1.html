@@ -214,8 +214,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
             display: flex;
+            flex-direction: column;
+            align-items: center;
             gap: 8px;
             z-index: 2;
+        }
+        .unlock-box .unlock-row {
+            display: flex;
+            gap: 8px;
         }
         .unlock-box input {
             padding: 8px 12px;
@@ -239,12 +245,6 @@
         }
         .unlock-box button:hover { background: #c084fc; }
         .unlock-box .forgot-link {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            text-align: center;
-            margin-top: 8px;
             font-size: 12px;
             color: #64748b;
             cursor: pointer;
@@ -658,7 +658,7 @@
             card.classList.add('locked');
             const box = document.createElement('div');
             box.className = 'unlock-box';
-            box.innerHTML = '<input type="password" placeholder="Enter password..." autofocus><button>Unlock</button><a class="forgot-link">Forgot password?</a>';
+            box.innerHTML = '<div class="unlock-row"><input type="password" placeholder="Enter password..." autofocus><button>Unlock</button></div><a class="forgot-link">Forgot password?</a>';
             card.appendChild(box);
             const input = box.querySelector('input');
             const btn = box.querySelector('button');
