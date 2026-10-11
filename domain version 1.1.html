@@ -194,6 +194,50 @@
         .card a:hover { 
             color: #38bdf8; 
         }
+        /* Password Lock System */
+        .card { position: relative; }
+        .lock-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .lock-btn:hover { opacity: 1; }
+        .card.locked ul { filter: blur(6px); pointer-events: none; user-select: none; }
+        .unlock-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 8px;
+            z-index: 2;
+        }
+        .unlock-box input {
+            padding: 8px 12px;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .unlock-box input:focus { outline: none; border-color: #a78bfa; }
+        .unlock-box button {
+            padding: 8px 14px;
+            background: #a78bfa;
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .unlock-box button:hover { background: #c084fc; }
     </style>
 </head>
 <body>
@@ -385,6 +429,100 @@
             runCommand();
         }
     });
+    // Password Lock System for Link Groups
+    (function() {
+        const STORAGE_KEY = 'dashboard_group_passwords';
+
+        function getPasswords() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+            catch (e) { return {}; }
+        }
+        function savePasswords(pw) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(pw));
+        }
+        function getGroupName(card) {
+            return card.getAttribute('data-group-name');
+        }
+
+        function addLockButton(card) {
+            const h2 = card.querySelector('h2');
+            if (!h2) return;
+            card.setAttribute('data-group-name', h2.textContent.trim());
+            const btn = document.createElement('button');
+            btn.className = 'lock-btn';
+            const name = getGroupName(card);
+            const hasPw = getPasswords()[name];
+            btn.textContent = hasPw ? '🔒' : '🔓';
+            btn.title = hasPw ? 'Remove password' : 'Set password';
+            btn.onclick = function(e) { e.stopPropagation(); handleLockClick(card); };
+            h2.appendChild(btn);
+        }
+
+        function handleLockClick(card) {
+            const name = getGroupName(card);
+            const pws = getPasswords();
+            if (pws[name]) {
+                const entered = prompt('Enter current password to remove lock from "' + name + '":');
+                if (entered === null) return;
+                if (entered === pws[name]) {
+                    delete pws[name];
+                    savePasswords(pws);
+                    unlockCard(card);
+                    const btn = card.querySelector('.lock-btn');
+                    btn.textContent = '🔓';
+                    btn.title = 'Set password';
+                } else {
+                    alert('Incorrect password.');
+                }
+            } else {
+                const pw = prompt('Set a password for "' + name + '":');
+                if (!pw) return;
+                pws[name] = pw;
+                savePasswords(pws);
+                lockCard(card);
+                const btn = card.querySelector('.lock-btn');
+                btn.textContent = '🔒';
+                btn.title = 'Remove password';
+            }
+        }
+
+        function lockCard(card) {
+            card.classList.add('locked');
+            const box = document.createElement('div');
+            box.className = 'unlock-box';
+            box.innerHTML = '<input type="password" placeholder="Enter password..." autofocus><button>Unlock</button>';
+            card.appendChild(box);
+            const input = box.querySelector('input');
+            const btn = box.querySelector('button');
+            function tryUnlock() {
+                const name = getGroupName(card);
+                if (input.value === getPasswords()[name]) {
+                    unlockCard(card);
+                } else {
+                    input.style.borderColor = '#ef4444';
+                    setTimeout(function() { input.style.borderColor = ''; }, 1000);
+                }
+                input.value = '';
+            }
+            btn.onclick = tryUnlock;
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') tryUnlock();
+            });
+        }
+
+        function unlockCard(card) {
+            card.classList.remove('locked');
+            const box = card.querySelector('.unlock-box');
+            if (box) box.remove();
+        }
+
+        document.querySelectorAll('.card').forEach(function(card) {
+            if (card.classList.contains('status-card')) return;
+            if (!card.querySelector('ul')) return;
+            addLockButton(card);
+            if (getPasswords()[getGroupName(card)]) lockCard(card);
+        });
+    })();
 </script>
     <!-- Fixed Hidden Audio Stream Matrix with a direct playable music link -->
 <audio id="dashboardMusic" loop>
