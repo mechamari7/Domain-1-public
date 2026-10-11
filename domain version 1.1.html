@@ -238,6 +238,19 @@
             font-size: 13px;
         }
         .unlock-box button:hover { background: #c084fc; }
+        .unlock-box .forgot-link {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .unlock-box .forgot-link:hover { color: #ef4444; }
         /* Custom Groups */
         .add-group-card {
             display: flex;
@@ -645,10 +658,11 @@
             card.classList.add('locked');
             const box = document.createElement('div');
             box.className = 'unlock-box';
-            box.innerHTML = '<input type="password" placeholder="Enter password..." autofocus><button>Unlock</button>';
+            box.innerHTML = '<input type="password" placeholder="Enter password..." autofocus><button>Unlock</button><a class="forgot-link">Forgot password?</a>';
             card.appendChild(box);
             const input = box.querySelector('input');
             const btn = box.querySelector('button');
+            const forgot = box.querySelector('.forgot-link');
             function tryUnlock() {
                 const name = getGroupName(card);
                 if (input.value === getPasswords()[name]) {
@@ -663,6 +677,17 @@
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') tryUnlock();
             });
+            forgot.onclick = function() {
+                const name = getGroupName(card);
+                if (confirm('Remove the password from "' + name + '"? This will unlock the group.')) {
+                    const pws = getPasswords();
+                    delete pws[name];
+                    savePasswords(pws);
+                    unlockCard(card);
+                    const lockBtn = card.querySelector('.lock-btn');
+                    if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Set password'; }
+                }
+            };
         }
 
         function unlockCard(card) {
