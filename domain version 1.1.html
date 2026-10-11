@@ -194,63 +194,100 @@
         .card a:hover { 
             color: #38bdf8; 
         }
-        /* Password Lock System */
-        .card { position: relative; }
-        .lock-btn {
+        /* Password Lock System — Redesigned */
+        .card { position: relative; overflow: hidden; }
+        .lock-toggle {
             float: right;
             cursor: pointer;
-            font-size: 14px;
-            opacity: 0.5;
-            transition: opacity 0.2s;
+            font-size: 13px;
+            opacity: 0.4;
+            transition: all 0.2s;
             background: none;
             border: none;
-            padding: 0;
+            padding: 0 2px;
         }
-        .lock-btn:hover { opacity: 1; }
-        .card.locked ul { filter: blur(6px); pointer-events: none; user-select: none; }
-        .unlock-box {
+        .lock-toggle:hover { opacity: 1; transform: scale(1.15); }
+        .card.locked ul,
+        .card.locked .add-link-btn {
+            filter: blur(5px);
+            pointer-events: none;
+            user-select: none;
+        }
+        .card-gate {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            inset: 0;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(3px);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            z-index: 2;
+            justify-content: center;
+            gap: 10px;
+            z-index: 10;
+            border-radius: 14px;
+            animation: gateFade 0.25s ease;
         }
-        .unlock-box .unlock-row {
-            display: flex;
-            gap: 8px;
+        @keyframes gateFade { from { opacity: 0; } to { opacity: 1; } }
+        .card-gate .gate-icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+            animation: lockPulse 2s ease infinite;
         }
-        .unlock-box input {
-            padding: 8px 12px;
+        @keyframes lockPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .card-gate .gate-input {
+            width: 70%;
+            max-width: 180px;
+            padding: 9px 12px;
             background: #0f172a;
             border: 1px solid #475569;
             border-radius: 8px;
             color: #38bdf8;
             font-family: monospace;
             font-size: 14px;
+            text-align: center;
+            transition: border-color 0.2s;
         }
-        .unlock-box input:focus { outline: none; border-color: #a78bfa; }
-        .unlock-box button {
-            padding: 8px 14px;
-            background: #a78bfa;
-            color: #0f172a;
+        .card-gate .gate-input:focus {
+            outline: none;
+            border-color: #a78bfa;
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+        }
+        .card-gate .gate-input.shake {
+            animation: shake 0.4s ease;
+            border-color: #ef4444;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .card-gate .gate-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            color: white;
             border: none;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             font-size: 13px;
+            transition: all 0.2s;
         }
-        .unlock-box button:hover { background: #c084fc; }
-        .unlock-box .forgot-link {
-            font-size: 12px;
+        .card-gate .gate-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
+        }
+        .card-gate .gate-forgot {
+            font-size: 11px;
             color: #64748b;
             cursor: pointer;
             text-decoration: underline;
+            margin-top: 2px;
+            transition: color 0.2s;
         }
-        .unlock-box .forgot-link:hover { color: #ef4444; }
+        .card-gate .gate-forgot:hover { color: #ef4444; }
         /* Custom Groups */
         .add-group-card {
             display: flex;
@@ -595,7 +632,65 @@
         grid.appendChild(addCard);
     })();
 
-    // Password Lock System for Link Groups
+    // Sound Engine — Web Audio API generated tones (no external files)
+    (function() {
+        let ctx = null;
+        function audio() {
+            if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+            return ctx;
+        }
+        window.sfx = function(type) {
+            try {
+                const c = audio();
+                if (c.state === 'suspended') c.resume();
+                const o = c.createOscillator();
+                const g = c.createGain();
+                o.connect(g); g.connect(c.destination);
+                const now = c.currentTime;
+                if (type === 'lock') {
+                    o.frequency.setValueAtTime(440, now);
+                    o.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+                    g.gain.setValueAtTime(0.15, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    o.start(now); o.stop(now + 0.3);
+                } else if (type === 'unlock') {
+                    o.frequency.setValueAtTime(220, now);
+                    o.frequency.exponentialRampToValueAtTime(660, now + 0.2);
+                    g.gain.setValueAtTime(0.15, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    o.start(now); o.stop(now + 0.3);
+                } else if (type === 'click') {
+                    o.frequency.value = 800;
+                    g.gain.setValueAtTime(0.06, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                    o.start(now); o.stop(now + 0.06);
+                } else if (type === 'hover') {
+                    o.frequency.value = 1200;
+                    g.gain.setValueAtTime(0.02, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    o.start(now); o.stop(now + 0.04);
+                } else if (type === 'error') {
+                    o.type = 'square';
+                    o.frequency.setValueAtTime(200, now);
+                    o.frequency.linearRampToValueAtTime(80, now + 0.15);
+                    g.gain.setValueAtTime(0.08, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    o.start(now); o.stop(now + 0.2);
+                }
+            } catch(e) {}
+        };
+        // Sound on card hover and link clicks
+        document.querySelectorAll('.card').forEach(function(card) {
+            card.addEventListener('mouseenter', function() { sfx('hover'); });
+        });
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.classList.contains('action-chip')) sfx('click');
+        });
+        document.querySelector('.search-bar')?.addEventListener('focus', function() { sfx('click'); });
+        document.querySelector('.launcher-btn')?.addEventListener('click', function() { sfx('click'); });
+    })();
+
+    // Password Lock System — Redesigned (no browser pop-ups)
     (function() {
         const STORAGE_KEY = 'dashboard_group_passwords';
 
@@ -616,99 +711,130 @@
             if (!card.getAttribute('data-group-name')) {
                 card.setAttribute('data-group-name', h2.textContent.trim());
             }
+            if (card.querySelector('.lock-toggle')) return;
             const btn = document.createElement('button');
-            btn.className = 'lock-btn';
+            btn.className = 'lock-toggle';
             const name = getGroupName(card);
             const hasPw = getPasswords()[name];
             btn.textContent = hasPw ? '🔒' : '🔓';
-            btn.title = hasPw ? 'Remove password' : 'Set password';
-            btn.onclick = function(e) { e.stopPropagation(); handleLockClick(card); };
+            btn.title = hasPw ? 'Manage lock' : 'Lock this group';
+            btn.onclick = function(e) { e.stopPropagation(); sfx('click'); handleLockClick(card); };
             h2.appendChild(btn);
         }
 
         function handleLockClick(card) {
             const name = getGroupName(card);
-            const pws = getPasswords();
-            if (pws[name]) {
-                const entered = prompt('Enter current password to remove lock from "' + name + '":');
-                if (entered === null) return;
-                if (entered === pws[name]) {
-                    delete pws[name];
-                    savePasswords(pws);
-                    unlockCard(card);
-                    const btn = card.querySelector('.lock-btn');
-                    btn.textContent = '🔓';
-                    btn.title = 'Set password';
-                } else {
-                    alert('Incorrect password.');
-                }
+            if (getPasswords()[name]) {
+                // Already has a password — show unlock gate
+                lockCard(card, false);
             } else {
-                const pw = prompt('Set a password for "' + name + '":');
-                if (!pw) return;
-                pws[name] = pw;
-                savePasswords(pws);
-                lockCard(card);
-                const btn = card.querySelector('.lock-btn');
-                btn.textContent = '🔒';
-                btn.title = 'Remove password';
+                // No password — show set-password gate
+                lockCard(card, true);
             }
         }
 
-        function lockCard(card) {
+        function lockCard(card, isSetMode) {
             card.classList.add('locked');
-            const box = document.createElement('div');
-            box.className = 'unlock-box';
-            box.innerHTML = '<div class="unlock-row"><input type="password" placeholder="Enter password..." autofocus><button>Unlock</button></div><a class="forgot-link">Forgot password?</a>';
-            card.appendChild(box);
-            const input = box.querySelector('input');
-            const btn = box.querySelector('button');
-            const forgot = box.querySelector('.forgot-link');
-            function tryUnlock() {
-                const name = getGroupName(card);
-                if (input.value === getPasswords()[name]) {
+            sfx('lock');
+            const existing = card.querySelector('.card-gate');
+            if (existing) existing.remove();
+
+            const name = getGroupName(card);
+            const hasPw = getPasswords()[name];
+            const gate = document.createElement('div');
+            gate.className = 'card-gate' + (isSetMode ? ' set-mode' : '');
+
+            if (isSetMode || !hasPw) {
+                gate.innerHTML =
+                    '<div class="gate-icon">🔐</div>' +
+                    '<input class="gate-input" type="password" placeholder="Set a password" autofocus>' +
+                    '<button class="gate-btn">Lock Group</button>' +
+                    '<a class="gate-forgot">Cancel</a>';
+                card.appendChild(gate);
+                const input = gate.querySelector('input');
+                const btn = gate.querySelector('.gate-btn');
+                const cancel = gate.querySelector('.gate-forgot');
+
+                function doSet() {
+                    if (!input.value) {
+                        input.classList.add('shake'); sfx('error');
+                        setTimeout(function() { input.classList.remove('shake'); }, 400);
+                        return;
+                    }
+                    const pws = getPasswords();
+                    pws[name] = input.value;
+                    savePasswords(pws);
+                    sfx('lock');
+                    gate.remove();
+                    lockCard(card, false);
+                    const lockBtn = card.querySelector('.lock-toggle');
+                    if (lockBtn) { lockBtn.textContent = '🔒'; lockBtn.title = 'Manage lock'; }
+                }
+                btn.onclick = doSet;
+                input.addEventListener('keypress', function(e) { if (e.key === 'Enter') doSet(); });
+                cancel.onclick = function() {
+                    sfx('click');
+                    gate.remove();
+                    card.classList.remove('locked');
+                };
+            } else {
+                gate.innerHTML =
+                    '<div class="gate-icon">🔒</div>' +
+                    '<input class="gate-input" type="password" placeholder="Enter password" autofocus>' +
+                    '<button class="gate-btn">Unlock</button>' +
+                    '<a class="gate-forgot">Forgot password?</a>';
+                card.appendChild(gate);
+                const input = gate.querySelector('input');
+                const btn = gate.querySelector('.gate-btn');
+                const forgot = gate.querySelector('.gate-forgot');
+
+                function tryUnlock() {
+                    if (input.value === getPasswords()[name]) {
+                        sfx('unlock');
+                        unlockCard(card);
+                        const lockBtn = card.querySelector('.lock-toggle');
+                        if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Lock this group'; }
+                    } else {
+                        input.classList.add('shake'); sfx('error');
+                        setTimeout(function() { input.classList.remove('shake'); }, 400);
+                        input.value = '';
+                    }
+                }
+                btn.onclick = tryUnlock;
+                input.addEventListener('keypress', function(e) { if (e.key === 'Enter') tryUnlock(); });
+
+                forgot.onclick = function() {
+                    if (!forgot.dataset.confirm) {
+                        sfx('click');
+                        forgot.dataset.confirm = '1';
+                        forgot.textContent = 'Click again to confirm reset';
+                        forgot.style.color = '#ef4444';
+                        return;
+                    }
+                    const pws = getPasswords();
+                    delete pws[name];
+                    savePasswords(pws);
+                    sfx('unlock');
                     unlockCard(card);
-                } else {
-                    input.style.borderColor = '#ef4444';
-                    setTimeout(function() { input.style.borderColor = ''; }, 1000);
-                }
-                input.value = '';
+                    const lockBtn = card.querySelector('.lock-toggle');
+                    if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Lock this group'; }
+                };
             }
-            btn.onclick = tryUnlock;
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') tryUnlock();
-            });
-            forgot.onclick = function() {
-                // Two-click confirm (no browser pop-ups, which can be blocked)
-                if (!forgot.dataset.confirm) {
-                    forgot.dataset.confirm = '1';
-                    forgot.textContent = 'Click again to reset password';
-                    forgot.style.color = '#ef4444';
-                    return;
-                }
-                const name = getGroupName(card);
-                const pws = getPasswords();
-                delete pws[name];
-                savePasswords(pws);
-                unlockCard(card);
-                const lockBtn = card.querySelector('.lock-btn');
-                if (lockBtn) { lockBtn.textContent = '🔓'; lockBtn.title = 'Set password'; }
-            };
         }
 
         function unlockCard(card) {
             card.classList.remove('locked');
-            const box = card.querySelector('.unlock-box');
-            if (box) box.remove();
+            const gate = card.querySelector('.card-gate');
+            if (gate) gate.remove();
         }
 
         document.querySelectorAll('.card').forEach(function(card) {
             if (card.classList.contains('status-card')) return;
             if (!card.querySelector('ul')) return;
             addLockButton(card);
-            if (getPasswords()[getGroupName(card)]) lockCard(card);
+            if (getPasswords()[getGroupName(card)]) lockCard(card, false);
         });
 
-        // Expose for dynamically created custom groups
         window.dashboardLock = { addLockButton: addLockButton, lockCard: lockCard, getGroupName: getGroupName };
     })();
 </script>
